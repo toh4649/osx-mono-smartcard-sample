@@ -32,16 +32,13 @@ namespace MonoScardOsX
 		[DllImport("/System/Library/Frameworks/PCSC.framework/PCSC")]
 		static extern uint SCardEstablishContext(int dwScope, IntPtr pvReserved1, IntPtr pvReserved2, out IntPtr phContext);
 
-		//[DllImport("winscard.dll", EntryPoint = "SCardListReadersA", CharSet = CharSet.Ansi)]
-		[DllImport("/System/Library/Frameworks/PCSC.framework/PCSC")]
+		[DllImport("/System/Library/Frameworks/PCSC.framework/PCSC", EntryPoint = "SCardListReaders", CharSet = CharSet.Ansi)]
 		public static extern uint SCardListReaders(IntPtr hContext, string mszGroups, byte[] mszReaders, ref int pcchReaders);
 
-
-		//[DllImport("winscard.dll", EntryPoint = "SCardConnect", CharSet = CharSet.Auto)]
-		[DllImport("/System/Library/Frameworks/PCSC.framework/PCSC")]
+		[DllImport("/System/Library/Frameworks/PCSC.framework/PCSC", EntryPoint = "SCardConnect", CharSet = CharSet.Auto)]
 		static extern uint SCardConnect(
 			IntPtr hContext,
-			[MarshalAs(UnmanagedType.LPTStr)] string szReader, //I was getting SCARD_E_UNKNOWN_READER until i removed [MarshalAs(UnmanagedType.LPTStr)]
+			[MarshalAs(UnmanagedType.LPTStr)] string szReader,
 			UInt32 dwShareMode,
 			UInt32 dwPreferredProtocols,
 			out IntPtr phCard,
@@ -84,7 +81,13 @@ namespace MonoScardOsX
 			}
 		}
 
-
+		public static void dump(byte[] data, int length)
+		{
+			for (int i = 0; i < length; i++) {
+				if((i % 16) == 0){Console.Write("\n");} 
+				Console.Write(data[i].ToString("X02") + " ");
+			}
+		}
 
 
 		public static void Main (string[] args)
@@ -92,13 +95,15 @@ namespace MonoScardOsX
 			IntPtr hContext;
 			uint res = 0;
 
+
 			res = SCardEstablishContext(SCARD_SCOPE_USER, IntPtr.Zero, IntPtr.Zero, out hContext);
 
-
+			//Detect readers connected to the system
 			byte[] bufReaderName = new byte[1024];
 			int lenReaderName = bufReaderName.Length;
 			res = SCardListReaders(hContext, SCARD_ALL_READERS, bufReaderName, ref lenReaderName);
 
+			//Parse reader names
 			List<string> readers = new List<string>();
 			while (bufReaderName.Length > 0) {
 				string s = System.Text.Encoding.ASCII.GetString (bufReaderName);
@@ -106,31 +111,35 @@ namespace MonoScardOsX
 				readers.Add (s);
 				bufReaderName = bufReaderName.Skip (s.Length + 1).ToArray();
 			}
-
-			foreach (var s in readers) { Console.WriteLine (s); }
-
+			Console.WriteLine ( readers.Count.ToString() + " reader(s) detected");
+			foreach (var s in readers) { Console.WriteLine (" - "+s); }
+			Console.WriteLine (""); 
+				
+			//Connect to the card
 			IntPtr hCard;
 			uint activeProtocol;
 			res = SCardConnect (hContext, readers [0], SCARD_SCOPE_USER, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, 
 				out hCard, out activeProtocol);
-
-
-			//Command for selecting(=activating) VISA card application
+			
+			//Command for selecting(activating) VISA card application
 			byte[] sendBuffer = new byte[]{ 0x00, 0xa4, 0x04, 0x00, 0x05, 0xa0, 0x00,0x00,0x00,0x03,0x00 };
 
-			//Command for selecting(=activating) MasterCard card application
+			//Command for selecting(activating) MasterCard card application
 			//byte[] sendBuffer = new byte[]{ 0x00, 0xa4, 0x04, 0x00, 0x05, 0xa0, 0x00,0x00,0x00,0x04,0x00 };
+
+
+			Console.Write("Card command:");
+			dump (sendBuffer, sendBuffer.Length);
+			Console.WriteLine ("");
 
 			byte[] recvBuffer = new byte[1024];
 			int lenRecv = recvBuffer.Length;
 
 			SCARD_IO_REQUEST pci = new SCARD_IO_REQUEST (activeProtocol);
 			res = SCardTransmit (hCard, pci, sendBuffer, sendBuffer.Length, pci, recvBuffer, ref lenRecv); 
-			if (res == 0) {
-				for(int i=0; i<lenRecv; i++) {
-					Console.Write (recvBuffer[i].ToString ("X02") + " ");
-				}
-			}
+
+			Console.Write("Card response:");
+			dump (recvBuffer, lenRecv);
 
 			res = SCardDisconnect (hCard, SCARD_UNPOWER_CARD);
 
