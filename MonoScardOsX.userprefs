@@ -1,0 +1,15 @@
+﻿<Properties StartupItem="MonoScardOsX/MonoScardOsX.csproj">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="MonoScardOsX/Program.cs">
+    <Files>
+      <File FileName="MonoScardOsX/Program.cs" Line="142" Column="1" />
+      <File FileName="MonoScardOsX/SCard.cs" Line="10" Column="3" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore>
+      <Breakpoint file="/Users/user1/Projects/MonoScardOsX/MonoScardOsX/Program.cs" line="139" column="4" />
+    </BreakpointStore>
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

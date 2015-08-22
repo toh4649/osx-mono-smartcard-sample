@@ -1,0 +1,1 @@
+﻿Simple example of how to use smart card in C# program running on Mac OSX. 
