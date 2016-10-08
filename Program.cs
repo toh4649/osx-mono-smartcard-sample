@@ -118,7 +118,7 @@ namespace MonoScardOsX
 			//Connect to the card
 			IntPtr hCard;
 			uint activeProtocol;
-			res = SCardConnect (hContext, readers [0], SCARD_SCOPE_USER, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, 
+			res = SCardConnect (hContext, readers [0], SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, 
 				out hCard, out activeProtocol);
 			
 			//Command for selecting(activating) VISA card application
